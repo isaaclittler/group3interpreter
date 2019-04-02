@@ -1,5 +1,6 @@
 import math
 import operator as op
+from collections import ChainMap as Environment
 
 def standard_env():
     env = {}
@@ -40,23 +41,54 @@ Atom   = (Symbol, Number)
 List   = list
 Exp    = (Atom, List)
 
+class Procedure(object): #scheme procedure
+    def __init__(self, parms, body, env):
+        self.parms, self.body, self.env = parms, body, env
+    def __call__(self, *args):
+        env =  Environment(dict(zip(self.parms, args)), self.env)
+        return eval(self.body, env)
+
 def tokenize(source): #source: str
     #returns list
     return source.replace('(',' ( ').replace(')',' ) ').replace(';', ' ; ').replace('#|', ' #| ').replace('|#', ' |# ').split()
 
-def read_from_tokens(tokens: list):
-    #Takes a sequence of tokens, and reads them
-    if len(tokens) == 0:
-        print("Nothing to intepret")
-    token = tokens.pop(0) #removes and returns element 0 from list of tokens
-    if token == "(":
-        L = []
-        while tokens[0] != ")":
-            L.append(read_from_tokens(tokens)) # calls itself on updated tokens list
+counter = 0
+def read_from_tokens(tokens): #tokens: list
+    token = tokens.pop(0)
+    if token == '(':
+        tree = []
+        global counter
+        counter += 1
+        while tokens[0] != ')':
+            temp = read_from_tokens(tokens)
+            if temp is not None:
+                tree.append(temp)
+            if counter<0:
+                raise SyntaxError('incorrect parenthesis')
         tokens.pop(0) #removes ')'
-        return L
-    elif token == ")":
-        print("unexpected )")
+        counter -= 1
+        if (counter > 0):
+            return tree #tree: list
+        else:
+            if len(tokens) == 0 or tokens.pop(0) == ';':
+                return tree
+            else:
+                raise SyntaxError('extra stuff after last parenthesis')            
+    elif token == ')':
+        raise SyntaxError('you forgot a ( for your )')
+    elif token == ';':
+        return tree
+    elif token == '#|':
+        while tokens[0] != '|#':
+            if len(tokens) > 1:
+                tokens.pop(0)
+            elif tokens[0] != '|#':
+                raise SyntaxError('forgot to end the comment')           
+        tokens.pop(0) #removes '|#'
+        if len(tokens) > 0:
+            return read_from_tokens(tokens)
+        else:
+            return []
     else:
         return atom(token)
 
@@ -81,6 +113,13 @@ def parse(code):
         else:
             return read_from_tokens(tokenize(code))
 
+def run(filename):
+    code = read_from_file(filename)
+    for i in range(len(code)):
+        if code[i] != []:
+            print(eval(code[i]))
+
+
 def read_from_file(filename):
     L = []
     with open(filename) as f:
@@ -92,7 +131,10 @@ def eval(x, env = global_env):
     if isinstance(x, Symbol):        
         return env[x]
     elif isinstance(x, Number):      
-        return x                
+        return x
+    elif x[0] == 'quote':
+        (_, exp) = x
+        return exp
     elif x[0] == 'if':
         test = x[1]
         conseq = x[2]
@@ -102,6 +144,9 @@ def eval(x, env = global_env):
     elif x[0] == 'define':           
         (_, symbol, exp) = x
         env[symbol] = eval(exp, env)
+    elif x[0] == 'lambda':
+        (_, parms, body) = x
+        return Procedure(parms, body, env)
     else:                            
         proc = eval(x[0], env)
         args = [eval(arg, env) for arg in x[1:]]
