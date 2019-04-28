@@ -119,7 +119,6 @@ def run(filename):
         if code[i] != []:
             print(eval(code[i]))
 
-
 def read_from_file(filename):
     L = []
     with open(filename) as f:
@@ -128,26 +127,39 @@ def read_from_file(filename):
     return L
 
 def eval(x, env = global_env):
-    if isinstance(x, Symbol):        
-        return env[x]
-    elif isinstance(x, Number):      
-        return x
-    elif x[0] == 'quote':
-        (_, exp) = x
-        return exp
-    elif x[0] == 'if':
-        test = x[1]
-        conseq = x[2]
-        alt = x[3]
-        #(_, test, conseq, alt) = x 
-        return eval((conseq if eval(test, env) else alt), env)
-    elif x[0] == 'define':           
-        (_, symbol, exp) = x
+    if isinstance(x, Symbol):   
+        return env.find(x)[x]
+    elif not isinstance(x, List):
+        return x   
+    op, *args = x       
+    if op == 'quote':            
+        return args[0]
+    elif op == 'if':             
+        (test, conseq, alt) = args
+        exp = (conseq if eval(test, env) else alt)
+        return eval(exp, env)
+    elif op == 'define':        
+        (symbol, exp) = args
         env[symbol] = eval(exp, env)
-    elif x[0] == 'lambda':
-        (_, parms, body) = x
+    elif op == 'set!':           
+        (symbol, exp) = args
+        env.find(symbol)[symbol] = eval(exp, env)
+    elif op == 'lambda':         
+        (parms, body) = args
         return Procedure(parms, body, env)
-    else:                            
-        proc = eval(x[0], env)
-        args = [eval(arg, env) for arg in x[1:]]
-        return proc(*args)
+    else:                       
+        proc = eval(op, env)
+        vals = [eval(arg, env) for arg in args]
+        return proc(*vals)
+
+    def repl(prompt='lis.py> '):
+    while True:
+        val = eval(parse(raw_input(prompt)))
+        if val is not None: 
+            print(schemestr(val))
+
+    def schemestr(exp):
+        if isinstance(exp, List):
+            return '(' + ' '.join(map(schemestr, exp)) + ')' 
+        else:
+            return str(exp)
