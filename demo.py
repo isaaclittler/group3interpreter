@@ -153,10 +153,10 @@ def eval(x, env = global_env):
         return proc(*vals)
 
     def repl(prompt='lis.py> '):
-    while True:
-        val = eval(parse(raw_input(prompt)))
-        if val is not None: 
-            print(schemestr(val))
+        while True:
+            val = eval(parse(raw_input(prompt)))
+            if val is not None: 
+                print(schemestr(val))
 
     def schemestr(exp):
         if isinstance(exp, List):
