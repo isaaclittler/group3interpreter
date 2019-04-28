@@ -54,43 +54,44 @@ def tokenize(source): #source: str
 
 counter = 0
 def read_from_tokens(tokens): #tokens: list
-    token = tokens.pop(0)
-    if token == '(':
-        tree = []
-        global counter
-        counter += 1
-        while tokens[0] != ')':
-            temp = read_from_tokens(tokens)
-            if temp is not None:
-                tree.append(temp)
-            if counter<0:
-                raise SyntaxError('incorrect parenthesis')
-        tokens.pop(0) #removes ')'
-        counter -= 1
-        if (counter > 0):
-            return tree #tree: list
-        else:
-            if len(tokens) == 0 or tokens.pop(0) == ';':
+        token = tokens.pop(0)
+        if token == '(':
+                tree = []
+                global counter
+                counter += 1
+                while tokens[0] != ')':
+                        temp = read_from_tokens(tokens)
+                        if temp is not None:
+                                tree.append(temp)
+                        if counter<0:
+                                raise SyntaxError('incorrect parenthesis')
+                tokens.pop(0) #removes ')'
+                counter -= 1
+                if (counter > 0):
+                        return tree #tree: list
+                else:
+                        if len(tokens) == 0 or tokens.pop(0) == ';':
+                                return tree
+                        else:
+                                raise SyntaxError('extra stuff after last parenthesis')
+                                
+        elif token == ')':
+                raise SyntaxError('you forgot a ( for your )')
+        elif token == ';':
                 return tree
-            else:
-                raise SyntaxError('extra stuff after last parenthesis')            
-    elif token == ')':
-        raise SyntaxError('you forgot a ( for your )')
-    elif token == ';':
-        return tree
-    elif token == '#|':
-        while tokens[0] != '|#':
-            if len(tokens) > 1:
-                tokens.pop(0)
-            elif tokens[0] != '|#':
-                raise SyntaxError('forgot to end the comment')           
-        tokens.pop(0) #removes '|#'
-        if len(tokens) > 0:
-            return read_from_tokens(tokens)
+        elif token == '#|':
+                while len(tokens) > 0 and tokens[0] != '|#':
+                        tokens.pop(0)
+                if(len(tokens) == 0):
+                        return -1
+                else:
+                        tokens.pop(0) #removes '|#'
+                        if len(tokens) > 0:
+                                return read_from_tokens(tokens)
+                        else:
+                                return []
         else:
-            return []
-    else:
-        return atom(token)
+                return atom(token)
 
 def atom(token): #token is a string
     #Numbers are read as numbers, everything else is a symbol for now"
@@ -121,11 +122,35 @@ def run(filename):
 
 
 def read_from_file(filename):
-    L = []
-    with open(filename) as f:
-        for line in f:
-            L.append(parse(line)) #return
-    return L
+        flag = False
+        L = []
+        with open(filename) as f:
+                for line in f:
+                      if(flag):
+                               s = line
+                               test = tokenize(s)
+                               try:
+                                    index = test.index('|#')
+                               except ValueError:  
+                                    index = -1
+                               if(index != -1):
+                                        while test[0] != '|#':
+                                             test.pop(0)
+                                        test.pop(0)
+                                        test = "".join(test)
+                                        temp =  parse(test)
+                                        flag = False
+                               else:
+                                        continue
+                      else:
+                              temp =  parse(line)
+                      if(temp == -1):
+                              flag = True
+                              continue
+                      L.append(temp) #return
+                if(flag):
+                      raise SyntaxError('you forgot to end the comment')
+        return L
 
 def eval(x, env = global_env):
     if isinstance(x, Symbol):        
