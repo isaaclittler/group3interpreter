@@ -125,7 +125,9 @@ def run(filename):
     code = read_from_file(filename)
     for i in range(len(code)):
         if code[i] != []:
-            print(eval(code[i]))
+            output = eval(code[i])
+            if output != None:
+                print(output)
 
 def read_from_file(filename):
     flag = False
@@ -187,8 +189,13 @@ def eval(x, env = global_env):
 def repl(prompt='RIZ> '):
     while True:
         val = eval(parse(input(prompt)))
-        if val is not None: 
-            print(schemestr(val))
+        if val is not None:
+            if val is True:
+                print("#t")
+            elif val is False:
+                print("#f")
+            else:
+                print(schemestr(val))
 
 def schemestr(exp):
     if isinstance(exp, List):
