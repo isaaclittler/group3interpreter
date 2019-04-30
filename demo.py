@@ -2,6 +2,14 @@ import math
 import operator as op
 from collections import ChainMap as Environment
 
+
+class Env(dict):
+    def __init__(self, parms=(), args=(), outer=None):
+        self.update(zip(parms, args))
+        self.outer = outer
+    def find(self, var):
+    return self if (var in self) else self.outer.find(var)
+
 def standard_env():
     env = {}
     env.update(vars(math)) 
