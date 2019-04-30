@@ -3,12 +3,5 @@ a scheme code for the classic statistic problem
 function factorial is first defined recursivly
 then the function is called in a simulated example
 |#
-(define factorial
-     (lambda (x)
-          (if (< x 1)
-               1
-               (* x (factorial (- x 1)))
-           )
-      )
- )
+(define factorial (lambda (x) (if (< x 1) 1 (* x (factorial (- x 1))))))
 ( / (factorial 8) (factorial 3)) ; ways of ordering 8 books with 5 spaces
