@@ -124,7 +124,7 @@ def parse(code):
 def run(filename):
     code = read_from_file(filename)
     for i in range(len(code)):
-        if code[i] != []:
+        if code[i] != [] and eval(code[i]) != None:
             print(eval(code[i]))
 
 def read_from_file(filename):
